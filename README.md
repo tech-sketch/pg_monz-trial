@@ -4,6 +4,7 @@ pg_monzをローカルPC上で試行する環境を構築する手順の説明�
 # 構成図
 下図の様な環境をホストPCに構築します。
 ホストPC（筆者環境はMacOS10.10.3）上のVirtualBoxにCentOSのVMを6台起動します。
+
 ![構成図.png](https://qiita-image-store.s3.amazonaws.com/0/13485/e9a0b838-b3a5-8bee-4b1a-76662968aa8b.png "構成図.png")
 
 # サーバの役割
