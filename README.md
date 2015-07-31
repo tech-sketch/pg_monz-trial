@@ -177,7 +177,7 @@ $ git clone https://github.com/pg-monz/pg_monz.git
 $ ansible-playbook --ask-pass -i pgcluster_hosts pgmonz_deploy/main.yml
 ```
 
-* Zabbix Webインタフェース（http://192.168.1.20）にアクセスする。(ホストPCでの作業)
+* Zabbix Webインタフェース http://192.168.1.20 にアクセスする。(ホストPCでの作業)
 
 * pg_monzのtemplateフォルダにあるテンプレート(.xml)をZabbix インポートする。(Zabbix Webインタフェースでの作業)
 
