@@ -59,13 +59,10 @@ zabbix                    running (virtualbox)
 
 * pgcluster_hostsを編集
 
-```bash
-$ vi ./roles/dj-wasabi.zabbix-agent/tasks/RedHat.yml
-```
-
-> # 編集箇所
+```Python
 ansible_ssh_host=（それぞれのホストのIPアドレス）
 ansible_ssh_private_key_file=（pg_monz-trialディレクトリ)/.vagrant.d/machines/(ホスト名)/virtualbox/private_key）
+```
 
 * あらかじめ必要なパッケージをインストールするPlaybookを実行
 
@@ -152,11 +149,13 @@ ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-agent
 ```bash
 $ vi ./zabbix-setting/roles/dj-wasabi.zabbix-agent/tasks/RedHat.yml
 ```
-> ※編集箇所(22行目に以下を追加)
+```Python
+#編集箇所(22行目に以下を追加)
 - name: "RedHat | Installing zabbix-sender"
   yum:  pkg=zabbix-sender
         state=present
   sudo: yes
+```
 
 * Playbookを実行
 
