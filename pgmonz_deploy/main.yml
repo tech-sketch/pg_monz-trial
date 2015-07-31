@@ -1,0 +1,40 @@
+---
+- hosts: all
+  gather_facts: no
+  sudo: yes
+  tasks:
+    - name: Deploy pg_monz configuration files
+      copy: src=../pg_monz/pg_monz/usr-local-etc/{{ item }} dest=/usr/local/etc
+      with_items:
+        - "pgpool_funcs.conf"
+        - "pgsql_funcs.conf"
+
+    - name: Deploy pg_monz script files
+      copy: src=../pg_monz/pg_monz/usr-local-bin/{{ item }} dest=/usr/local/bin mode="u+x,g+x,o+x"
+      with_items:
+        - "find_dbname.sh"
+        - "find_dbname_table.sh"
+        - "find_pgpool_backend.sh"
+        - "find_pgpool_backend_ip.sh"
+        - "find_sr.sh"
+        - "find_sr_client_ip.sh"
+        - "pgpool_backend_status.sh"
+        - "pgpool_cache.sh"
+        - "pgpool_connections.sh"
+        - "pgpool_delegate_ip.sh"
+        - "pgpool_simple.sh"
+        - "pgsql_db_funcs.sh"
+        - "pgsql_primary.sh"
+        - "pgsql_server_funcs.sh"
+        - "pgsql_simple.sh"
+        - "pgsql_sr_server_funcs.sh"
+        - "pgsql_standby.sh"
+        - "pgsql_tbl_funcs.sh"
+        - "pgsql_userdb_funcs.sh"
+
+    - name: Deploy pg_monz userparameter files
+      copy: src=../pg_monz/pg_monz/zabbix_agentd.d/userparameter_pgsql.conf dest=/etc/zabbix/zabbix_agentd.d/
+
+    - name: "zabbix-agent restarted"
+      service: name=zabbix-agent
+               state=restarted

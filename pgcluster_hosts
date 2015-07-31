@@ -1,0 +1,20 @@
+[pgpool_active]
+pgpool01 ansible_ssh_user=vagrant ansible_ssh_host=192.168.1.11 ansible_ssh_private_key_file=/Users/naka24nori/Vagrant/pg_monz-trial/.vagrant/machines/pgpool01/virtualbox/private_key
+
+[pgpool_standby]
+pgpool02 ansible_ssh_user=vagrant ansible_ssh_host=192.168.1.12 ansible_ssh_private_key_file=/Users/naka24nori/Vagrant/pg_monz-trial/.vagrant/machines/pgpool02/virtualbox/private_key
+
+[pgpool:children]
+pgpool_active
+pgpool_standby
+
+[pgsql_primary]
+pgsql01 ansible_ssh_user=vagrant ansible_ssh_host=192.168.1.13 ansible_ssh_private_key_file=/Users/naka24nori/Vagrant/pg_monz-trial/.vagrant/machines/pgsql01/virtualbox/private_key
+
+[pgsql_standby]
+pgsql02 ansible_ssh_user=vagrant ansible_ssh_host=192.168.1.14 ansible_ssh_private_key_file=/Users/naka24nori/Vagrant/pg_monz-trial/.vagrant/machines/pgsql02/virtualbox/private_key
+pgsql03 ansible_ssh_user=vagrant ansible_ssh_host=192.168.1.15 ansible_ssh_private_key_file=/Users/naka24nori/Vagrant/pg_monz-trial/.vagrant/machines/pgsql03/virtualbox/private_key
+
+[pgsql:children]
+pgsql_primary
+pgsql_standby

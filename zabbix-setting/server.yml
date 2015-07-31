@@ -1,0 +1,6 @@
+# Setup Zabbix Server
+- hosts: zabbix-server
+  sudo: yes
+  roles:
+     - { role: geerlingguy.apache }
+     - { role: dj-wasabi.zabbix-server, zabbix_url: 192.168.1.20, zabbix_database_creation: False, zabbix_timezone: Asia/Tokyo, server_dbname: zabbix, server_dbuser: zabbix, server_dbpassword: zabbix, server_dbport: 5432 }

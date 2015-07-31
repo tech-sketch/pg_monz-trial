@@ -57,6 +57,22 @@ pgsql03                   running (virtualbox)
 zabbix                    running (virtualbox)
 ```
 
+* pgcluster_hostsを編集
+
+```bash
+$ vi ./roles/dj-wasabi.zabbix-agent/tasks/RedHat.yml
+```
+
+> # 編集箇所
+ansible_ssh_host=（それぞれのホストのIPアドレス）
+ansible_ssh_private_key_file=（pg_monz-trialディレクトリ)/.vagrant.d/machines/(ホスト名)/virtualbox/private_key）
+
+* あらかじめ必要なパッケージをインストールするPlaybookを実行
+
+```bash
+$ ansible-playbook --ask-pass -i pgcluster_hosts prepare-setting/main.yml
+```
+
 * pgpool-II,PostgreSQL SRクラスタを構築するAnsible Playbookをダウンロード
 
 ```bash
@@ -76,72 +92,33 @@ pgsql_standby01_ip: 192.168.1.14
 pgsql_standby02_ip: 192.168.1.15
 ```
 
-* そのままではうまく動かない部分があったのでPlaybookを修正
-
-```Python
-# roles/spred_selinux_settings/tasks/main.ymlを新規作成
----
-- name: Check if selinux is installed
-  command: getenforce
-  register: command_result
-  ignore_errors: True
-
-- name: Install libselinux-python
-  yum: name={{ item }}
-  with_items:
-    - epel-release
-    - libselinux-python
-  when: command_result|success and command_result.stdout != 'Disabled'
-```
-
-```Python
-# prepare.ymlにspred_selinux_settingsを追加
----
-- hosts: all
-  sudo: yes
-  gather_facts: no
-  roles:
-   - spred_selinux_settings
-   - spred_ssh_settings
-   - spred_pgdg_rpms
-   - spred_pgpool_src
-   - spred_os_cmd
-```
-
 * Playbookを実行
 
 ```bash
-$ ansible-playbook --ask-pass --ask-sudo-pass -i hosts site.yml
+$ ansible-playbook --ask-pass -i pgcluster_hosts ansible-pgool-pgsql-cluster/site.yml
 ```
 
-## Zabbix サーバの構築 (サーバzabbixの作業)
-* サーバ zabbix にログイン。後の作業は基本的にrootユーザで実行する。
+## Zabbix サーバの構築 (ホストPCの作業)
+
+* あらかじめ必要なパッケージをインストールするPlaybookを実行
+
+```bash
+$ ansible-playbook --ask-pass -i zabbix_hosts prepare-setting/main.yml
+```
+
+* サーバ zabbix にログインし、PostgreSQLをインストール (サーバzabbixでの作業)
 
 ```bash
 $ vagrant ssh zabbix
 $ su
-```
-
-* PostgreSQLをインストール
-
-```bash
 $ wget http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
 $ rpm -ivh pgdg-centos94-9.4-1.noarch.rpm
-$ yum install postgresql94 postgresql94-server postgresql94-contrib
+$ yum -y install postgresql94 postgresql94-server postgresql94-contrib
 $ su - postgres
 $ cd /var/lib/pgsql/9.4/data
 $ /usr/pgsql-9.4/bin/initdb --encoding=UTF8 --no-locale
 # ユーザを root に戻す
 $ service postgresql-9.4 start
-```
-
-* Zabbix Serverをインストール
-
-```bash
-$ wget http://repo.zabbix.com/zabbix/2.4/rhel/6/x86_64/zabbix-release-2.4-1.el6.noarch.rpm
-$ rpm -ivh zabbix-release-2.4-1.el6.noarch.rpm
-$ yum install zabbix zabbix-server-pgsql zabbix-server zabbix-sender zabbix-get
-$ yum install zabbix-web-pgsql zabbix-web zabbix-web-japanese
 ```
 
 * zabbixという名前のユーザ,データベースを作成
@@ -154,53 +131,62 @@ $ psql
 # create user zabbix with encrypted password 'zabbix' nocreatedb nocreateuser;
 # create database zabbix owner zabbix;
 ```
-```bash
-$ psql -U zabbix zabbix < /usr/share/doc/zabbix-server-pgsql-2.4.5/create/schema.sql
-$ psql -U zabbix zabbix < /usr/share/doc/zabbix-server-pgsql-2.4.5/create/images.sql
-$ psql -U zabbix zabbix < /usr/share/doc/zabbix-server-pgsql-2.4.5/create/data.sql
-```
 
-* Zabbixサーバ設定ファイルを編集して起動
+* Zabbix Serverをインストール (ホストPCの作業)
 
 ```bash
-$ vi /etc/zabbix/zabbix_server.conf
+$ ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-server
+$ ansible-playbook --ask-pass -i zabbix_hosts zabbix-setting/server.yml
 ```
 
-> ※編集箇所
-> DBPort=5432
+## Zabbix エージェントの導入 (ホストPCの作業)
+
+* Zabbixエージェント導入用Playbookをダウンロード
 
 ```bash
-$ vi /etc/php.ini
+ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-agent
 ```
 
-> ※編集箇所
-> date.timezone = Asia/Tokyo
+* Playbookを一部編集
 
 ```bash
-$ service zabbix-server start
-$ service httpd start
+$ vi ./zabbix-setting/roles/dj-wasabi.zabbix-agent/tasks/RedHat.yml
+```
+> ※編集箇所(22行目に以下を追加)
+- name: "RedHat | Installing zabbix-sender"
+  yum:  pkg=zabbix-sender
+        state=present
+  sudo: yes
+
+* Playbookを実行
+
+```bash
+ansible-playbook --ask-pass -i pgcluster_hosts zabbix-setting/agent.yml
 ```
 
-* [Zabbix Webページ](http://192.168.1.20/zabbix/)にアクセスし、初期設定ウィザードを起動
- * 3. Configure DB connection 画面でDBの接続情報入力
+## pg_monzの導入
 
-> Database name : zabbix
-User : zabbix
-Password : zabbix
-
-* pg_monz をダウンロード
+* pg_monzをダウンロードする。(ホストPCの作業)
 
 ```bash
 $ git clone https://github.com/pg-monz/pg_monz.git
 ```
 
-* templateフォルダのテンプレート(.xml)をインポートする。
+* pg_monz 設定ファイル、スクリプトを配置するPlaybookを実行 (ホストPCの作業)
 
-* テンプレートTemplate App PostgreSQLのマクロを編集
+```bash
+$ ansible-playbook --ask-pass -i pgcluster_hosts pgmonz_deploy/main.yml
+```
+
+* Zabbix Webインタフェース（http://192.168.1.20）にアクセスする。(ホストPCでの作業)
+
+* pg_monzのtemplateフォルダにあるテンプレート(.xml)をZabbix インポートする。(Zabbix Webインタフェースでの作業)
+
+* テンプレートTemplate App PostgreSQLのマクロを編集する。(Zabbix Webインタフェースでの作業)
 
 > {$PGLOGDIR} : /var/log/pgsql
 
-* ホストを作成し、テンプレートを割り当てる。
+* ホストを作成し、テンプレートを割り当てる。(Zabbix Webインタフェースでの作業)
 
 | ホスト名 | テンプレート名 |
 |:-----------|:---------|
@@ -208,44 +194,10 @@ $ git clone https://github.com/pg-monz/pg_monz.git
 | pgsql01,pgsql02,pgsql03 | Template App PostgreSQL SR |
 | PostgreSQL Cluster | Template App pgpool-II watchdog, Template App PostgreSQL SR Cluster |
 
-* ホストグループを作成する。
+* ホストグループを作成する。(Zabbix Webインタフェースでの作業)
 
 | ホストグループ名 | ホスト名 |
 |:-----------|:---------|
 | pgpool | pgpool01,pgpool02 |
 | PostgreSQL | pgsql01,pgsql02,pgsql03 |
 | PostgreSQL Cluster | PostgreSQL Cluster |
-
-
-## Zabbix エージェントの導入（サーバzabbix以外の全サーバでの作業）
-
-* Zabbixエージェントのインストール
-
-```bash
-$ wget http://repo.zabbix.com/zabbix/2.4/rhel/6/x86_64/zabbix-release-2.4-1.el6.noarch.rpm
-$ rpm -ivh zabbix-release-2.4-1.el6.noarch.rpm
-$ yum install zabbix-agent zabbix-sender
-```
-
-* Zabbixエージェントの設定ファイルを編集して起動
-
-```bash
-$ vi /etc/zabbix/zabbix_agentd.conf
-```
-> ※編集箇所(Hostnameは各サーバのホスト名を記載)
-Server=192.168.1.20
-ServerActive=192.168.1.20
-Hostname=pgpool01
-AllowRoot=1
-
-* pg_monz 設定ファイル、スクリプトを配置し、Zabbixエージェントを起動
-
-```bash
-$ git clone https://github.com/pg-monz/pg_monz.git
-$ cd pg_monz/pg_monz/
-$ cp usr-local-etc/* /usr/local/etc
-$ cp usr-local-bin/* /usr/local/bin
-$ chmod +x /usr/local/bin/*.sh
-$ cp zabbix_agentd.d/userparameter_pgsql.conf /etc/zabbix/zabbix_agentd.d/
-$ service zabbix-agent start
-```
