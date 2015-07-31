@@ -33,7 +33,7 @@ pg_monzをローカルPC上で試行する環境を構築する手順の説明�
 | Zabbix     |    2.4.5 |
 
 # 構築手順
-## pgpool-II,PostgreSQL SRクラスタの構築 (ホストPCの作業)
+## pgpool-II,PostgreSQL SRクラスタの構築
 * ホストPCにVirtualBox,Vagrant,Ansibleをインストール（詳細省略）
 * 任意のディレクトリにこのリポジトリをクローン
 
@@ -95,7 +95,7 @@ pgsql_standby02_ip: 192.168.1.15
 $ ansible-playbook --ask-pass -i pgcluster_hosts ansible-pgool-pgsql-cluster/site.yml
 ```
 
-## Zabbix サーバの構築 (ホストPCの作業)
+## Zabbixサーバの構築
 
 * あらかじめ必要なパッケージをインストールするPlaybookを実行
 
@@ -103,7 +103,7 @@ $ ansible-playbook --ask-pass -i pgcluster_hosts ansible-pgool-pgsql-cluster/sit
 $ ansible-playbook --ask-pass -i zabbix_hosts prepare-setting/main.yml
 ```
 
-* サーバ zabbix にログインし、PostgreSQLをインストール (サーバzabbixでの作業)
+* サーバ zabbix にログインし、PostgreSQLをインストール (ここからサーバzabbixでの作業)
 
 ```bash
 $ vagrant ssh zabbix
@@ -129,14 +129,16 @@ $ psql
 # create database zabbix owner zabbix;
 ```
 
-* Zabbix Serverをインストール (ホストPCの作業)
+ (サーバzabbixでの作業ここまで)
+
+* Zabbix Serverをインストール
 
 ```bash
 $ ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-server
 $ ansible-playbook --ask-pass -i zabbix_hosts zabbix-setting/server.yml
 ```
 
-## Zabbix エージェントの導入 (ホストPCの作業)
+## Zabbix エージェントの導入
 
 * Zabbixエージェント導入用Playbookをダウンロード
 
@@ -165,27 +167,29 @@ ansible-playbook --ask-pass -i pgcluster_hosts zabbix-setting/agent.yml
 
 ## pg_monzの導入
 
-* pg_monzをダウンロードする。(ホストPCの作業)
+* pg_monzをダウンロードする。
 
 ```bash
 $ git clone https://github.com/pg-monz/pg_monz.git
 ```
 
-* pg_monz 設定ファイル、スクリプトを配置するPlaybookを実行 (ホストPCの作業)
+* pg_monz 設定ファイル、スクリプトを配置するPlaybookを実行
 
 ```bash
 $ ansible-playbook --ask-pass -i pgcluster_hosts pgmonz_deploy/main.yml
 ```
 
-* Zabbix Webインタフェース http://192.168.1.20 にアクセスする。(ホストPCでの作業)
+* Zabbix Webインタフェース http://192.168.1.20 にアクセスする。
 
-* pg_monzのtemplateフォルダにあるテンプレート(.xml)をZabbix インポートする。(Zabbix Webインタフェースでの作業)
+(ここからZabbix Webインタフェースでの作業)
 
-* テンプレートTemplate App PostgreSQLのマクロを編集する。(Zabbix Webインタフェースでの作業)
+* pg_monzのtemplateフォルダにあるテンプレート(.xml)をZabbix インポートする。
+
+* テンプレートTemplate App PostgreSQLのマクロを編集する。
 
 > {$PGLOGDIR} : /var/log/pgsql
 
-* ホストを作成し、テンプレートを割り当てる。(Zabbix Webインタフェースでの作業)
+* ホストを作成し、テンプレートを割り当てる。
 
 | ホスト名 | テンプレート名 |
 |:-----------|:---------|
@@ -193,7 +197,7 @@ $ ansible-playbook --ask-pass -i pgcluster_hosts pgmonz_deploy/main.yml
 | pgsql01,pgsql02,pgsql03 | Template App PostgreSQL SR |
 | PostgreSQL Cluster | Template App pgpool-II watchdog, Template App PostgreSQL SR Cluster |
 
-* ホストグループを作成する。(Zabbix Webインタフェースでの作業)
+* ホストグループを作成する。
 
 | ホストグループ名 | ホスト名 |
 |:-----------|:---------|
