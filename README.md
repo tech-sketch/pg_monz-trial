@@ -10,7 +10,7 @@ pg_monzをローカルPC上で試行する環境を構築する手順の説明�
 # サーバの役割
 | サーバ名  | IPアドレス     | 役割 |
 |:---------|-------------:|:----|
-| zabbix   | 192.168.1.20 | Zabbix監視サーバ,PostgreSQLログ管理サーバ |
+| zabbix   | 192.168.1.20 | Zabbix監視サーバ |
 | pgpool01 | 192.168.1.11 | pgpool-II稼働サーバ。Active用の仮想IP割当て済 |
 | pqpool02 | 192.168.1.12 | pgpool-II稼働サーバ(Standby) |
 | pgsql01  | 192.168.1.13 | PostgreSQL稼働サーバ。SRのprimary |
