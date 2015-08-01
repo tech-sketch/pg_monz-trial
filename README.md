@@ -70,7 +70,7 @@ ansible_ssh_private_key_file=（pg_monz-trialディレクトリ)/.vagrant.d/mach
 $ git clone https://github.com/pg-monz/ansible-pgool-pgsql-cluster.git
 $ ansible-galaxy install -p ./zabbix-setting/roles patrik.uytterhoeven.PostgreSQL-For-RHEL6x
 $ ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-server
-# ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-agent
+$ ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-agent
 ```
 
 * group_vars/all.ymlを編集
