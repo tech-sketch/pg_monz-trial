@@ -1,6 +1,41 @@
+# Setup PostgreSQL in zabbix host
+- hosts: zabbix-server
+  user: vagrant
+  sudo: yes
+  sudo_user: root
+  roles:
+    - { role: patrik.uytterhoeven.PostgreSQL-For-RHEL6x,
+    	postgresql_version: 9.3,
+    	postgresql_locale: 'C',
+    	postgresql_logging_collector: on,
+    	postgresql_lc_messages: C,
+        postgresql_lc_monetary: C,
+        postgresql_lc_numeric: C,
+        postgresql_lc_time: C,
+        postgresql_client_encoding: UTF8,
+        postgresql_unix_socket_directories: [ /tmp ],
+        postgresql_users: [ {name: zabbix, pass: zabbix, encrypted: no } ],
+        postgresql_databases: [ {name: zabbix} ],
+        postgresql_user_privileges: [ {name: zabbix, db: zabbix, priv: "ALL"} ] }
+
 # Setup Zabbix Server
 - hosts: zabbix-server
   sudo: yes
   roles:
-     - { role: geerlingguy.apache }
-     - { role: dj-wasabi.zabbix-server, zabbix_url: 192.168.1.20, zabbix_database_creation: False, zabbix_timezone: Asia/Tokyo, server_dbname: zabbix, server_dbuser: zabbix, server_dbpassword: zabbix, server_dbport: 5432 }
+    - { role: geerlingguy.apache }
+    - { role: dj-wasabi.zabbix-server,
+    	zabbix_url: 192.168.1.20,
+    	zabbix_database_creation: False,
+    	zabbix_timezone: Asia/Tokyo,
+    	server_dbname: zabbix,
+    	server_dbuser: zabbix,
+    	server_dbpassword: zabbix,
+    	server_dbport: 5432 }
+
+# Install zabbix-web-japanese
+- hosts: zabbix-server
+  sudo: yes
+  tasks:
+    - name: "RedHat | Installing zabbix-web-japanese"
+      yum:  pkg=zabbix-web-japanese
+            state=present

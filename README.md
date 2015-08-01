@@ -57,23 +57,20 @@ pgsql03                   running (virtualbox)
 zabbix                    running (virtualbox)
 ```
 
-* pgcluster_hostsを編集
+* pgcluster_hosts,zabbix_hostsを編集
 
 ```Python
 ansible_ssh_host=（それぞれのホストのIPアドレス）
 ansible_ssh_private_key_file=（pg_monz-trialディレクトリ)/.vagrant.d/machines/(ホスト名)/virtualbox/private_key）
 ```
 
-* あらかじめ必要なパッケージをインストールするPlaybookを実行
-
-```bash
-$ ansible-playbook --ask-pass -i pgcluster_hosts prepare-setting/main.yml
-```
-
-* pgpool-II,PostgreSQL SRクラスタを構築するAnsible Playbookをダウンロード
+* 使用するAnsible Playbookを外部サイトからダウンロード
 
 ```bash
 $ git clone https://github.com/pg-monz/ansible-pgool-pgsql-cluster.git
+$ ansible-galaxy install -p ./zabbix-setting/roles patrik.uytterhoeven.PostgreSQL-For-RHEL6x
+$ ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-server
+# ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-agent
 ```
 
 * group_vars/all.ymlを編集
@@ -89,7 +86,13 @@ pgsql_standby01_ip: 192.168.1.14
 pgsql_standby02_ip: 192.168.1.15
 ```
 
-* Playbookを実行
+* あらかじめ必要なパッケージをインストールするPlaybookを実行
+
+```bash
+$ ansible-playbook --ask-pass -i pgcluster_hosts prepare-setting/main.yml
+```
+
+* pgpool-II,PostgreSQL SRクラスタを構築するPlaybookを実行
 
 ```bash
 $ ansible-playbook --ask-pass -i pgcluster_hosts ansible-pgool-pgsql-cluster/site.yml
@@ -103,63 +106,15 @@ $ ansible-playbook --ask-pass -i pgcluster_hosts ansible-pgool-pgsql-cluster/sit
 $ ansible-playbook --ask-pass -i zabbix_hosts prepare-setting/main.yml
 ```
 
-* サーバ zabbix にログインし、PostgreSQLをインストール (ここからサーバzabbixでの作業)
+* Zabbix ServerをインストールするPlaybookを実行
 
 ```bash
-$ vagrant ssh zabbix
-$ su
-$ wget http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
-$ rpm -ivh pgdg-centos94-9.4-1.noarch.rpm
-$ yum -y install postgresql94 postgresql94-server postgresql94-contrib
-$ su - postgres
-$ cd /var/lib/pgsql/9.4/data
-$ /usr/pgsql-9.4/bin/initdb --encoding=UTF8 --no-locale
-# ユーザを root に戻す
-$ service postgresql-9.4 start
-```
-
-* zabbixという名前のユーザ,データベースを作成
-
-```bash
-$ su - postgres
-$ psql
-```
-```SQL
-# create user zabbix with encrypted password 'zabbix' nocreatedb nocreateuser;
-# create database zabbix owner zabbix;
-```
-
- (サーバzabbixでの作業ここまで)
-
-* Zabbix Serverをインストール
-
-```bash
-$ ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-server
 $ ansible-playbook --ask-pass -i zabbix_hosts zabbix-setting/server.yml
 ```
 
 ## Zabbix エージェントの導入
 
-* Zabbixエージェント導入用Playbookをダウンロード
-
-```bash
-ansible-galaxy install -p ./zabbix-setting/roles dj-wasabi.zabbix-agent
-```
-
-* Playbookを一部編集
-
-```bash
-$ vi ./zabbix-setting/roles/dj-wasabi.zabbix-agent/tasks/RedHat.yml
-```
-```Python
-#編集箇所(22行目に以下を追加)
-- name: "RedHat | Installing zabbix-sender"
-  yum:  pkg=zabbix-sender
-        state=present
-  sudo: yes
-```
-
-* Playbookを実行
+* ZabbiｘエージェントをインストールするPlaybookを実行
 
 ```bash
 ansible-playbook --ask-pass -i pgcluster_hosts zabbix-setting/agent.yml
