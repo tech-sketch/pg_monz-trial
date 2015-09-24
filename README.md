@@ -28,9 +28,9 @@ pg_monzをローカルPC上で試行する環境を構築する手順の説明�
 ## ゲストOS
 | プロダクト名 | バージョン |
 |:-----------|---------:|
-| CentOS     |      6.6 |
-| PostgreSQL |    9.4.3 |
-| Zabbix     |    2.4.5 |
+| CentOS     |      6.7 |
+| PostgreSQL |    9.4.4 |
+| Zabbix     |    2.4.6 |
 
 # 構築手順
 ## pgpool-II,PostgreSQL SRクラスタの構築
