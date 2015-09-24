@@ -15,6 +15,9 @@
         - libselinux-python
       when: command_result|success and command_result.stdout != 'Disabled'
 
+    - name: Permissive selinux
+      selinux: state=disabled
+
     - name: Install gcc and rsync and git
       yum: name={{ item }}
       with_items:
